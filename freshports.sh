@@ -36,12 +36,24 @@ PERL='/usr/local/bin/perl'
 
 check_for_jobs() {
 	#
-	# This flag file is only set by a job run by this script.
-	# A race condition should never arise.
+	# job_waiting only wakes job-waiting.pl, which then runs a job for each
+	# of the other flags it finds, until none is left.  Remove it before
+	# running job-waiting.pl, not after.
+	#
+	# This is the freshports user's job_waiting, in FRESHPORTS_FLAGDIR; the
+	# ingress user has its own.  It is not only set by jobs this script
+	# runs, as this comment used to say: compare-index-daily.sh and
+	# set_hourly_flags.sh set it from cron, and special_processing_files.pm
+	# sets it when a commit loaded here touches MOVED, UPDATING or vuln.xml.
+	# Removed afterwards, a flag set while job-waiting.pl was finishing was
+	# deleted unread, and that job waited for the next wake-up.
+	# Removed first, it survives, and the next pass of the loop runs
+	# job-waiting.pl again.
 	#
 	FLAG="${FRESHPORTS_FLAGDIR}/job_waiting"
 	if [ -f ${FLAG} ]
 	then
+		rm -f ${FLAG}
 		echo 'yes, there is a job waiting'
 		# see https://bugs.langille.org/view.php?id=333
 		cd ${SCRIPTDIR}
@@ -52,7 +64,6 @@ check_for_jobs() {
 		else
 			echo "FATAL job-waiting.pl finished with an error"
 		fi
-		rm ${FLAG}
 	fi
 }
 
