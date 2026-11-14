@@ -172,7 +172,22 @@ while :
  						echo "$(ls -ld ${file} ${INCOMING}/ ${OUTPUT}/)"
 
 						# use -p to preserve mtime
-						${CP} -p ${file} ${OUTPUT}
+						#
+						# Only once the copy is safely in ${OUTPUT} is the
+						# original removed.  This used to run cp and then
+						# rm -f without looking at cp's result, so with recent/
+						# full or not writable the only copy of the XML was
+						# deleted and that commit could not be loaded again.
+						# Now the XML stays in incoming and this pass stops;
+						# the next pass loads it again, which finds the commit
+						# already in the database and exits 0, and retries the
+						# copy.
+						#
+						if ! ${CP} -p ${file} ${OUTPUT}
+						then
+							echo "FATAL: could not copy ${file} to ${OUTPUT}; leaving it in ${INCOMING} to try again"
+							break
+						fi
 
 						# using mv caused: /usr/local/bin/readproctitle service errors: ...message-queues/recent/2019.07.15.15.42.07.48391.txt.raw: set owner/group (was: 10002/10001): Operation not permitted\nmv: /var/db/freshports/message-queues/recent/2019.07.15.15.43.31.53460.txt.raw: set owner/group (was: 10002/10001): Operation not permitted\nmv: /var/db/freshports/message-queues/recent/2019.07.15.15.45.39.56551.txt.raw: set owner/group (was: 10002/10001): Operation not permitted\n
 						# even when using this example:
