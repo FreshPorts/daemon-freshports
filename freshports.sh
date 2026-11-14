@@ -150,16 +150,18 @@ while :
 					     ${PERL} ${SCRIPTDIR}/load_xml_into_db.pl ${file} > ${SPOOLING}/${filename}.log 2>${SPOOLING}/${filename}.errors
 					RESULT=$?
 
-					if [ -f ${SPOOLING}/${filename}.errors ]
+					#
+					# An empty .errors file says nothing: remove it.  A
+					# non-empty one stays in ${SPOOLING} with the .log, and
+					# below goes wherever the XML goes: recent/ when the load
+					# worked, retry/ when it failed.  It used to be moved to
+					# recent/ here, before RESULT was looked at, so after a
+					# failure the XML and its .log were in retry/ and the
+					# error messages explaining the failure were in recent/.
+					#
+					if [ -f ${SPOOLING}/${filename}.errors ] && [ ! -s ${SPOOLING}/${filename}.errors ]
 					then
-						#  found errors
-						if [ -s ${SPOOLING}/${filename}.errors ]
-						then
-							# move that file to the output directory
-							mv ${SPOOLING}/${filename}.errors ${OUTPUT}/
-						else
-							rm ${SPOOLING}/${filename}.errors
-						fi
+						rm -f ${SPOOLING}/${filename}.errors
 					fi
 
 					echo "XML loading finished"
