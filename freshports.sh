@@ -58,11 +58,12 @@ check_for_jobs() {
 		# see https://bugs.langille.org/view.php?id=333
 		cd ${SCRIPTDIR}
 		${PERL} ./job-waiting.pl
-		if [ $? -eq 0 ]
+		status=$?
+		if [ $status -eq 0 ]
 		then
 			echo "job-waiting.pl finishes normally"
 		else
-			echo "FATAL job-waiting.pl finished with an error"
+			echo "FATAL job-waiting.pl finished with an error: $status"
 		fi
 	fi
 }
